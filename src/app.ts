@@ -2,15 +2,21 @@ import express, { Request, Response } from "express"
 import { PrismaClient } from "@prisma/client"
 import bycrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import cors from "cors"
 
 import { throwNotFound, throwNotAcceptable, throwUnauthorized } from "./utils"
 
-const PORT = 3000
+const PORT = 3001
 const JWT_SECRET = process.env.JWT_SECRET || "SECRET"
+var CORS_OPTS = {
+  origin: "http://localhost:3000",
+  optionsSuccessStatus: 200,
+}
 
 const prisma = new PrismaClient()
 const app = express()
 app.use(express.json())
+app.use(cors(CORS_OPTS))
 
 app.get("/", (req: Request, res: Response) => {
   res.json({
@@ -51,30 +57,36 @@ app.post("/register", async (req: Request, res: Response) => {
   return res.status(500).json({ message: "User creation failed!" })
 })
 
-app.post("/login", async (req: Request, res: Response) => {
-  const { username, password } = req.body
+app.post(
+  "/login",
+  async (
+    req: Request<{}, {}, { username: string; password: string }>,
+    res: Response
+  ) => {
+    const { username, password } = req.body
 
-  if (!username) throw new Error("Invalid Username!")
-  if (!password) throw new Error("Invalid Password!")
+    if (!username) throw new Error("Invalid Username!")
+    if (!password) throw new Error("Invalid Password!")
 
-  const user = await prisma.user.findFirst({
-    where: {
-      username,
-    },
-  })
+    const user = await prisma.user.findFirst({
+      where: {
+        username,
+      },
+    })
 
-  if (!user)
-    return throwNotFound(res, `User with username ${username} doesn't exits!`)
+    if (!user)
+      return throwNotFound(res, `User with username ${username} doesn't exits!`)
 
-  if (!bycrypt.compareSync(password, user.hash))
-    return throwNotAcceptable(res, "Wrong Password!")
+    if (!bycrypt.compareSync(password, user.hash))
+      return throwNotAcceptable(res, "Wrong Password!")
 
-  const jwtToken = jwt.sign({ username }, JWT_SECRET)
-  res.cookie("token", jwtToken)
-  return res.json({
-    token: jwtToken,
-  })
-})
+    const jwtToken = jwt.sign({ username }, JWT_SECRET)
+    res.cookie("token", jwtToken)
+    return res.json({
+      token: jwtToken,
+    })
+  }
+)
 
 /**
  * Posts Routes
