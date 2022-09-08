@@ -28,6 +28,7 @@ app.get("/", (req: Request, res: Response) => {
  * Auth Routes
  * POST /register
  * POST /login
+ * PUT /change-password
  */
 app.post("/register", async (req: Request, res: Response) => {
   const { username, email, password } = req.body
@@ -85,6 +86,52 @@ app.post(
     return res.json({
       token: jwtToken,
     })
+  }
+)
+
+// Change a User's password
+app.put(
+  "/change-password",
+  async (
+    req: Request<
+      {},
+      {},
+      { token: string; password: string; newPassword: string }
+    >,
+    res: Response
+  ) => {
+    const { token, password, newPassword } = req.body
+
+    if (newPassword.length < 8)
+      return throwNotAcceptable(res, "Password must be of length 8 or above")
+    if (password === newPassword)
+      return throwNotAcceptable(res, "New password is the same as old one")
+
+    try {
+      const { username } = jwt.verify(token, JWT_SECRET) as { username: string }
+      const user = await prisma.user.findFirst({ where: { username } })
+
+      if (!user) return throwNotFound(res, "User doesn't exist.")
+
+      if (!bycrypt.compareSync(password, user.hash))
+        return throwNotAcceptable(res, "Wrong Password!")
+
+      const newHash = bycrypt.hashSync(newPassword)
+
+      const { hash: _, ...updatedUser } = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          hash: newHash,
+        },
+      })
+
+      if (!updatedUser)
+        return res.status(500).json({ message: "Something Went Wrong!" })
+
+      return res.json(updatedUser)
+    } catch (e) {
+      return throwUnauthorized(res, "Invalid Token!")
+    }
   }
 )
 
