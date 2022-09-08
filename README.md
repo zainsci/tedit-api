@@ -2,11 +2,11 @@
 
 A simple social media CRUD API. Kinda like how Twitter where Users Post in Groups.
 
-### Stack Used
+#### Stack Used
 
 1. Express with TypeScript
-2. Prisma for ORM
-3. PostgresQL for DB
+2. Prisma ORM
+3. PostgresQL
 
 #### Tables/Models
 
@@ -14,15 +14,37 @@ A simple social media CRUD API. Kinda like how Twitter where Users Post in Group
 2. Groups
 3. Posts
 
-### What Can It Do?
+#### What Can It Do?
 
 1. Register and Login Users
 2. Create and Updating Groups
 3. Creating, Reading, Updating and Deleting Posts
 
+#### Setting up locally
+
+```bash
+$ git clone https://www.github.com/zainsci/tedit-api.git
+$ cd tedit-api
+# Install Dependencies
+$ yarn
+```
+
+Setup the following environment variables in the `.env` file.
+
+```bash
+# .env
+DATABASE_URL="postgresql://<username>:<password>@localhost:5432/<database_name>?schema=public"
+JWT_SECRET="<some random characters>"
+```
+
+```bash
+# Run the server
+$ yarn dev
+```
+
 #### TODO
 
-- [ ] Add Change Password feature
+- [x] Add Change Password feature
 - [ ] Add Comments to Posts
 - [ ] Allow Images in Posts
 - [ ] Adding Upvotes and Downvotes to Posts
