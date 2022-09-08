@@ -11,26 +11,28 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  username  String   @unique
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  username  String    @unique
   email     String
   hash      String
   posts     Post[]
-  groups    Group[]  @relation("Groups")
-  admin     Group[]  @relation("Admin")
+  groups    Group[]   @relation("Groups")
+  admin     Group[]   @relation("Admin")
+  comments  Comment[]
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   title     String
   body      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  author    User      @relation(fields: [authorId], references: [id])
   authorId  Int
-  group     Group    @relation(fields: [groupId], references: [id])
+  group     Group     @relation(fields: [groupId], references: [id])
   groupId   Int
+  comments  Comment[]
 }
 
 model Group {
@@ -40,4 +42,15 @@ model Group {
   admins      User[] @relation("Admin")
   users       User[] @relation("Groups")
   posts       Post[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
 }

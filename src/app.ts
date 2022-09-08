@@ -310,6 +310,150 @@ app.delete(
 )
 
 /**
+ * Comments
+ * GET /comments/:postId
+ * POST /comments/:postId
+ * PUT /comments/:commentId
+ * DELETE /comments/:commentId
+ */
+// Get all the comments on a post
+app.get(
+  "/comments/:postId",
+  async (req: Request<{ postId: string }>, res: Response) => {
+    const { postId } = req.params
+
+    const id = parseInt(postId, 10)
+    if (!id) return throwNotFound(res, "No Comments for this Post")
+
+    const comments = await prisma.comment.findMany({
+      where: {
+        postId: id,
+      },
+    })
+
+    return res.json(comments)
+  }
+)
+// Create a Comment on a Post
+app.post(
+  "/comments/:postId",
+  async (
+    req: Request<{ postId: string }, {}, { token: string; body: string }>,
+    res: Response
+  ) => {
+    const { postId } = req.params
+    const { token, body } = req.body
+
+    const id = parseInt(postId, 10)
+    if (!id) return throwNotFound(res, "Post doesn't exist")
+
+    try {
+      const { username } = jwt.verify(token, JWT_SECRET) as { username: string }
+      const user = await prisma.user.findFirst({ where: { username } })
+
+      if (!user)
+        return throwNotFound(
+          res,
+          `User with username ${username} doesn't exist!`
+        )
+
+      const comment = await prisma.comment.create({
+        data: {
+          body,
+          postId: id,
+          authorId: user.id,
+        },
+      })
+
+      return res.json(comment)
+    } catch (e) {
+      return throwUnauthorized(res, "Invalid Token!")
+    }
+  }
+)
+// Update a Comment on a Post
+app.put(
+  "/comments/:commentId",
+  async (
+    req: Request<{ commentId: string }, {}, { token: string; body: string }>,
+    res: Response
+  ) => {
+    const { commentId } = req.params
+    const { token, body } = req.body
+
+    const id = parseInt(commentId, 10)
+    if (!id) return throwNotFound(res, "Comment doesn't exist")
+
+    try {
+      const { username } = jwt.verify(token, JWT_SECRET) as { username: string }
+      const user = await prisma.user.findFirst({ where: { username } })
+
+      if (!user)
+        return throwNotFound(
+          res,
+          `User with username ${username} doesn't exist!`
+        )
+
+      const comment = await prisma.comment.findFirst({ where: { id } })
+      if (!comment) return throwNotFound(res, "Comment doesn't exist")
+
+      if (comment.authorId !== user.id)
+        return throwUnauthorized(res, "Not Authorized!")
+
+      const updatedComment = await prisma.comment.update({
+        where: { id },
+        data: {
+          body,
+        },
+      })
+
+      return res.json(updatedComment)
+    } catch (e) {
+      return throwUnauthorized(res, "Invalid Token!")
+    }
+  }
+)
+// Delete a Comment from a Post
+app.delete(
+  "/comments/:commentId",
+  async (
+    req: Request<{ commentId: string }, {}, { token: string }>,
+    res: Response
+  ) => {
+    const { commentId } = req.params
+    const { token } = req.body
+
+    const id = parseInt(commentId, 10)
+    if (!id) return throwNotFound(res, "Comment doesn't exist")
+
+    try {
+      const { username } = jwt.verify(token, JWT_SECRET) as { username: string }
+      const user = await prisma.user.findFirst({ where: { username } })
+
+      if (!user)
+        return throwNotFound(
+          res,
+          `User with username ${username} doesn't exist!`
+        )
+
+      const comment = await prisma.comment.findFirst({ where: { id } })
+      if (!comment) return throwNotFound(res, "Comment doesn't exist")
+
+      if (comment.authorId !== user.id)
+        return throwUnauthorized(res, "Not Authorized!")
+
+      const deletedComment = await prisma.comment.delete({
+        where: { id },
+      })
+
+      return res.json(deletedComment)
+    } catch (e) {
+      return throwUnauthorized(res, "Invalid Token!")
+    }
+  }
+)
+
+/**
  * Groups
  * POST /group/create
  * PUT /group/:name/description
