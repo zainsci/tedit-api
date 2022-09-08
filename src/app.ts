@@ -30,33 +30,41 @@ app.get("/", (req: Request, res: Response) => {
  * POST /login
  * PUT /change-password
  */
-app.post("/register", async (req: Request, res: Response) => {
-  const { username, email, password } = req.body
+app.post(
+  "/register",
+  async (
+    req: Request<{}, {}, { username: string; email: string; password: string }>,
+    res: Response
+  ) => {
+    const { username, email, password } = req.body
 
-  if (!username) throwNotAcceptable(res, "Invalid Username!")
-  if (!email) throwNotAcceptable(res, "Invalid Email!")
-  if (!password) throwNotAcceptable(res, "Invalid Password!")
+    if (!username || username.length < 4)
+      return throwNotAcceptable(res, "Username must be of length 8 or above")
+    if (!email) return throwNotAcceptable(res, "Invalid Email!")
+    if (!password || password.length < 8)
+      return throwNotAcceptable(res, "Password must be of length 8 or above")
 
-  const hash = bycrypt.hashSync(password)
-  const newUser = await prisma.user
-    .create({
-      data: {
-        username,
-        email,
-        hash,
-      },
-    })
-    .catch((e) => {
-      throwNotAcceptable(res, `${e?.meta?.target[0]} already exists`)
-    })
+    const hash = bycrypt.hashSync(password)
+    const newUser = await prisma.user
+      .create({
+        data: {
+          username,
+          email,
+          hash,
+        },
+      })
+      .catch((e) => {
+        throwNotAcceptable(res, `${e?.meta?.target[0]} already exists`)
+      })
 
-  if (newUser) {
-    const { hash: _, ...returnUser } = newUser
-    return res.json(returnUser)
+    if (newUser) {
+      const { hash: _, ...returnUser } = newUser
+      return res.json(returnUser)
+    }
+
+    return res.status(500).json({ message: "User creation failed!" })
   }
-
-  return res.status(500).json({ message: "User creation failed!" })
-})
+)
 
 app.post(
   "/login",
@@ -66,8 +74,8 @@ app.post(
   ) => {
     const { username, password } = req.body
 
-    if (!username) throw new Error("Invalid Username!")
-    if (!password) throw new Error("Invalid Password!")
+    if (!username) return throwNotAcceptable(res, "Invalid Username!")
+    if (!password) return throwNotAcceptable(res, "Invalid Password!")
 
     const user = await prisma.user.findFirst({
       where: {
