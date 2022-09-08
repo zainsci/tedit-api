@@ -22,6 +22,7 @@ A simple social media CRUD API. Kinda like how Twitter where Users Post in Group
 
 #### TODO
 
+- [ ] Add Change Password feature
 - [ ] Add Comments to Posts
 - [ ] Allow Images in Posts
 - [ ] Adding Upvotes and Downvotes to Posts
