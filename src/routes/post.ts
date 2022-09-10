@@ -7,6 +7,40 @@ import verifyUser from "../middleware/auth"
 const router = express.Router()
 
 /**
+ * Route for getting 10 Posts at a time
+ * Used for pagination using ?pageNo=1
+ * @name /posts/
+ * @function
+ * @memberof module:routes/post~postRouter
+ */
+router.get(
+  "/",
+  async (req: Request<{}, {}, {}, { pageNo: string }>, res: Response) => {
+    const { pageNo } = req.query
+
+    const num = parseInt(pageNo)
+    let posts
+
+    if (!num) {
+      posts = await prisma.post.findMany({
+        take: 10,
+        orderBy: { createdAt: "desc" },
+      })
+    } else {
+      const skip = (num - 1) * 10
+
+      posts = await prisma.post.findMany({
+        take: 10,
+        skip,
+        orderBy: { createdAt: "desc" },
+      })
+    }
+
+    return res.json(posts)
+  }
+)
+
+/**
  * Route for getting all Posts in a Group
  * @name /posts/:groupname
  * @function
