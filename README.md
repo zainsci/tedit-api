@@ -45,7 +45,7 @@ $ yarn dev
 #### TODO
 
 - [x] Add Change Password feature
-- [ ] Add Comments to Posts
+- [x] Add Comments to Posts
 - [ ] Allow Images in Posts
 - [ ] Adding Upvotes and Downvotes to Posts
 - [ ] Add Comment to other Comments
