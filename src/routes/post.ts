@@ -7,6 +7,27 @@ import verifyUser from "../middleware/auth"
 const router = express.Router()
 
 /**
+ * Route for a Posts with :id
+ * @name /posts/:id
+ * @function
+ * @memberof module:routes/post~postRouter
+ */
+router.get(
+  "/:postId",
+  async (req: Request<{ postId: string }>, res: Response) => {
+    const { postId } = req.params
+
+    const id = parseInt(postId, 10)
+    if (!id) return throwNotFound(res, `Post with ID: ${id} doesn't exist`)
+
+    const post = await prisma.post.findFirst({ where: { id } })
+    if (!post) return throwNotFound(res, `Post not found`)
+
+    return res.json(post)
+  }
+)
+
+/**
  * Route for getting 10 Posts at a time
  * Used for pagination using ?pageNo=1
  * @name /posts/
