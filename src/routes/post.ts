@@ -71,20 +71,35 @@ router.get(
  * @function
  * @memberof module:routes/post~postRouter
  */
-router.get("/:groupname", async (req: Request, res: Response) => {
-  const { groupname } = req.params
+router.get(
+  "/group/:groupname",
+  async (
+    req: Request<{ groupname: string }, {}, {}, { pageNo: string }>,
+    res: Response
+  ) => {
+    const { groupname } = req.params
+    const { pageNo } = req.query
 
-  const posts = await prisma.post.findMany({
-    where: {
-      group: { name: groupname },
-    },
-  })
+    let num = parseInt(pageNo)
+    if (!num) num = 1
+    const skip = (num - 1) * 10
 
-  if (posts.length == 0)
-    return throwNotFound(res, `Group with name ${groupname} doesn't exist!`)
+    const posts = await prisma.post.findMany({
+      take: 10,
+      skip,
+      orderBy: { createdAt: "desc" },
+      where: {
+        group: { name: groupname },
+      },
+      include: {
+        author: { select: { username: true } },
+        group: { select: { name: true } },
+      },
+    })
 
-  res.json(posts)
-})
+    res.json(posts)
+  }
+)
 
 /**
  * Auth Middleware for
