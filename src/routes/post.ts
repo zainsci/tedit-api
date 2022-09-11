@@ -20,7 +20,13 @@ router.get(
     const id = parseInt(postId, 10)
     if (!id) return throwNotFound(res, `Post with ID: ${id} doesn't exist`)
 
-    const post = await prisma.post.findFirst({ where: { id } })
+    const post = await prisma.post.findFirst({
+      where: { id },
+      include: {
+        author: { select: { username: true } },
+        group: { select: { name: true } },
+      },
+    })
     if (!post) return throwNotFound(res, `Post not found`)
 
     return res.json(post)
@@ -46,6 +52,10 @@ router.get(
       posts = await prisma.post.findMany({
         take: 10,
         orderBy: { createdAt: "desc" },
+        include: {
+          author: { select: { username: true } },
+          group: { select: { name: true } },
+        },
       })
     } else {
       const skip = (num - 1) * 10
@@ -54,6 +64,10 @@ router.get(
         take: 10,
         skip,
         orderBy: { createdAt: "desc" },
+        include: {
+          author: { select: { username: true } },
+          group: { select: { name: true } },
+        },
       })
     }
 
