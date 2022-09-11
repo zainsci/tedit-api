@@ -45,31 +45,21 @@ router.get(
   async (req: Request<{}, {}, {}, { pageNo: string }>, res: Response) => {
     const { pageNo } = req.query
 
-    const num = parseInt(pageNo)
+    let num = parseInt(pageNo)
     let posts
 
-    if (!num) {
-      posts = await prisma.post.findMany({
-        take: 10,
-        orderBy: { createdAt: "desc" },
-        include: {
-          author: { select: { username: true } },
-          group: { select: { name: true } },
-        },
-      })
-    } else {
-      const skip = (num - 1) * 10
+    if (!num) num = 1
+    const skip = (num - 1) * 10
 
-      posts = await prisma.post.findMany({
-        take: 10,
-        skip,
-        orderBy: { createdAt: "desc" },
-        include: {
-          author: { select: { username: true } },
-          group: { select: { name: true } },
-        },
-      })
-    }
+    posts = await prisma.post.findMany({
+      take: 10,
+      skip,
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: { select: { username: true } },
+        group: { select: { name: true } },
+      },
+    })
 
     return res.json(posts)
   }
