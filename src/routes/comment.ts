@@ -24,6 +24,16 @@ router.get(
       where: {
         postId: id,
       },
+      include: {
+        author: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     })
 
     return res.json(comments)
@@ -62,6 +72,9 @@ router.post(
         body,
         postId: id,
         authorId: user.id,
+      },
+      include: {
+        author: { select: { username: true } },
       },
     })
 
