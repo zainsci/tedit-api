@@ -1,10 +1,55 @@
 import express, { Request, Response } from "express"
 
 import prisma from "../prisma/client"
-import { throwNotAcceptable, throwUnauthorized } from "../utils"
+import { throwNotAcceptable, throwNotFound, throwUnauthorized } from "../utils"
 import verifyUser from "../middleware/auth"
 
 const router = express.Router()
+
+/**
+ * Get Group metadata and
+ * check if the user joined
+ * group or not
+ * @name /group/:name
+ * @function
+ * @memberof module:routes/group~groupRouter
+ */
+router.get(
+  "/:name",
+  async (
+    req: Request<{ name: string }, {}, {}, { username: string }>,
+    res: Response
+  ) => {
+    const { name } = req.params
+    let { username } = req.query
+
+    if (typeof username === "undefined") username = ""
+
+    const group = await prisma.group.findFirst({
+      where: {
+        name,
+      },
+      include: {
+        _count: {
+          select: {
+            users: true,
+          },
+        },
+        users: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
+      },
+    })
+    if (!group) return throwNotFound(res, "Group doesn't exist")
+
+    return res.json(group)
+  }
+)
 
 /**
  * Auth Middleware for
@@ -79,6 +124,37 @@ router.put(
     })
 
     return res.json(updatedGroupInfo)
+  }
+)
+
+/**
+ * Join a Group
+ * @name /group/:name/join
+ * @function
+ * @memberof module:routes/group~groupRouter
+ */
+router.post(
+  "/:name/join",
+  async (
+    req: Request<{ name: string }, {}, { token: string }>,
+    res: Response
+  ) => {
+    const { name } = req.params
+
+    const user = res.locals.user
+
+    const groupJoined = await prisma.group.update({
+      where: { name },
+      data: {
+        users: {
+          connect: {
+            id: user.id,
+          },
+        },
+      },
+    })
+
+    return res.json({ joined: groupJoined })
   }
 )
 
