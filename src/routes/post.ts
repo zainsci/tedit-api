@@ -67,6 +67,42 @@ router.get(
 
 /**
  * Route for getting all Posts in a Group
+ * @name /posts/user/:username
+ * @function
+ * @memberof module:routes/post~postRouter
+ */
+router.get(
+  "/user/:username",
+  async (
+    req: Request<{ username: string }, {}, {}, { pageNo: string }>,
+    res: Response
+  ) => {
+    const { username } = req.params
+    const { pageNo } = req.query
+
+    let num = parseInt(pageNo)
+    if (!num) num = 1
+    const skip = (num - 1) * 10
+
+    const posts = await prisma.post.findMany({
+      take: 10,
+      skip,
+      orderBy: { createdAt: "desc" },
+      where: {
+        author: { username },
+      },
+      include: {
+        author: { select: { username: true } },
+        group: { select: { name: true } },
+      },
+    })
+
+    res.json(posts)
+  }
+)
+
+/**
+ * Route for getting all Posts in a Group
  * @name /posts/:groupname
  * @function
  * @memberof module:routes/post~postRouter
