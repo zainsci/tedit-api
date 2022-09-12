@@ -2,6 +2,7 @@ import express, { Request, Response } from "express"
 import cors from "cors"
 
 import authRouter from "./routes/auth"
+import userRouter from "./routes/user"
 import postRouter from "./routes/post"
 import groupRouter from "./routes/group"
 import commentRouter from "./routes/comment"
@@ -16,6 +17,7 @@ const app = express()
 app.use(express.json())
 app.use(cors(CORS_OPTS))
 app.use("/", authRouter)
+app.use("/user", userRouter)
 app.use("/posts", postRouter)
 app.use("/group", groupRouter)
 app.use("/comments", commentRouter)
