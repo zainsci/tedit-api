@@ -14,8 +14,12 @@ const router = express.Router()
  */
 router.get(
   "/:postId",
-  async (req: Request<{ postId: string }>, res: Response) => {
+  async (
+    req: Request<{ postId: string }, {}, {}, { username: string }>,
+    res: Response
+  ) => {
     const { postId } = req.params
+    const { username } = req.query
 
     const id = parseInt(postId, 10)
     if (!id) return throwNotFound(res, `Post with ID: ${id} doesn't exist`)
@@ -25,6 +29,25 @@ router.get(
       include: {
         author: { select: { username: true } },
         group: { select: { name: true } },
+        _count: {
+          select: { upvotes: true, downvotes: true, comments: true },
+        },
+        upvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
+        downvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
       },
     })
     if (!post) return throwNotFound(res, `Post not found`)
@@ -42,8 +65,13 @@ router.get(
  */
 router.get(
   "/",
-  async (req: Request<{}, {}, {}, { pageNo: string }>, res: Response) => {
-    const { pageNo } = req.query
+  async (
+    req: Request<{}, {}, {}, { pageNo: string; username: string }>,
+    res: Response
+  ) => {
+    const { pageNo, username } = req.query
+
+    console.log(username)
 
     let num = parseInt(pageNo)
     let posts
@@ -58,6 +86,25 @@ router.get(
       include: {
         author: { select: { username: true } },
         group: { select: { name: true } },
+        _count: {
+          select: { upvotes: true, downvotes: true, comments: true },
+        },
+        upvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
+        downvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
       },
     })
 
@@ -94,6 +141,25 @@ router.get(
       include: {
         author: { select: { username: true } },
         group: { select: { name: true } },
+        _count: {
+          select: { upvotes: true, downvotes: true, comments: true },
+        },
+        upvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
+        downvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
       },
     })
 
@@ -110,11 +176,16 @@ router.get(
 router.get(
   "/group/:groupname",
   async (
-    req: Request<{ groupname: string }, {}, {}, { pageNo: string }>,
+    req: Request<
+      { groupname: string },
+      {},
+      {},
+      { pageNo: string; username: string }
+    >,
     res: Response
   ) => {
     const { groupname } = req.params
-    const { pageNo } = req.query
+    const { pageNo, username } = req.query
 
     let num = parseInt(pageNo)
     if (!num) num = 1
@@ -130,6 +201,25 @@ router.get(
       include: {
         author: { select: { username: true } },
         group: { select: { name: true } },
+        _count: {
+          select: { upvotes: true, downvotes: true, comments: true },
+        },
+        upvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
+        downvotes: {
+          where: {
+            username,
+          },
+          select: {
+            username: true,
+          },
+        },
       },
     })
 
@@ -262,5 +352,158 @@ router.delete("/:id", async (req: Request<{ id: string }>, res: Response) => {
 
   return res.json(delPost)
 })
+
+/**
+ * UpVote a Post
+ * @name /posts/:postId/vote/up
+ * @function
+ * @memberof module:routes/post~postRouter
+ */
+router.post(
+  "/:postId/vote/up",
+  async (
+    req: Request<{ postId: string }, {}, { token: string }>,
+    res: Response
+  ) => {
+    const { postId } = req.params
+
+    const id = parseInt(postId, 10)
+    if (!id) return throwNotFound(res, `Post with ID: ${id} doesn't exist`)
+
+    const user = res.locals.user
+
+    let post
+    try {
+      post = await prisma.post.update({
+        where: { id },
+        data: {
+          upvotes: {
+            connect: {
+              id: user.id,
+            },
+          },
+        },
+        select: {
+          downvotes: {
+            where: {
+              id: user.id,
+            },
+            select: {
+              id: true,
+              username: true,
+            },
+          },
+        },
+      })
+
+      if (post.downvotes[0].id === user.id) {
+        console.log("HERE")
+        post = await prisma.post.update({
+          where: { id },
+          data: {
+            downvotes: {
+              disconnect: {
+                id: user.id,
+              },
+            },
+          },
+          select: {
+            downvotes: {
+              where: { id: user.id },
+              select: {
+                username: true,
+              },
+            },
+            upvotes: {
+              where: { id: user.id },
+              select: {
+                username: true,
+              },
+            },
+          },
+        })
+      }
+    } catch (e) {}
+
+    return res.json(post)
+  }
+)
+
+/**
+ * DownVote a Post
+ * @name /posts/:postId/vote/down
+ * @function
+ * @memberof module:routes/post~postRouter
+ */
+router.post(
+  "/:postId/vote/down",
+  async (
+    req: Request<{ postId: string }, {}, { token: string }>,
+    res: Response
+  ) => {
+    const { postId } = req.params
+
+    const id = parseInt(postId, 10)
+    if (!id) return throwNotFound(res, `Post with ID: ${id} doesn't exist`)
+
+    const user = res.locals.user
+
+    let post
+    try {
+      post = await prisma.post.update({
+        where: { id },
+        data: {
+          downvotes: {
+            connect: {
+              id: user.id,
+            },
+          },
+        },
+        select: {
+          upvotes: {
+            where: {
+              id: user.id,
+            },
+            select: {
+              id: true,
+              username: true,
+            },
+          },
+        },
+      })
+
+      if (post.upvotes[0].id === user.id) {
+        post = await prisma.post.update({
+          where: { id },
+          data: {
+            upvotes: {
+              disconnect: {
+                id: user.id,
+              },
+            },
+          },
+          select: {
+            downvotes: {
+              where: {
+                id: user.id,
+              },
+              select: {
+                username: true,
+              },
+            },
+            upvotes: {
+              where: { id: user.id },
+              select: {
+                username: true,
+              },
+            },
+          },
+        })
+      }
+    } catch (e) {}
+
+    return res.json(post)
+  }
+)
 
 export default router
