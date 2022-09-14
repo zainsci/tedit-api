@@ -20,6 +20,8 @@ model User {
   groups    Group[]   @relation("Groups")
   admin     Group[]   @relation("Admin")
   comments  Comment[]
+  upvotes   Post[]    @relation("UpVotes")
+  downvotes Post[]    @relation("DownVotes")
 }
 
 model Post {
@@ -33,6 +35,8 @@ model Post {
   group     Group     @relation(fields: [groupId], references: [id])
   groupId   Int
   comments  Comment[]
+  upvotes   User[]    @relation("UpVotes")
+  downvotes User[]    @relation("DownVotes")
 }
 
 model Group {
