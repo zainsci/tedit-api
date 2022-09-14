@@ -17,7 +17,13 @@ export default async function verifyUser(
     const { username } = jwt.verify(token, JWT_SECRET) as { username: string }
     if (!username) return throwUnauthorized(res, "Invalid Token!")
 
-    const user = await prisma.user.findFirst({ where: { username } })
+    const user = await prisma.user.findFirst({
+      where: { username },
+      select: {
+        id: true,
+        username: true,
+      },
+    })
     if (!user) return throwNotFound(res, "User doesn't exist.")
 
     res.locals.user = user
