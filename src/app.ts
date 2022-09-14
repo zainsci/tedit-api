@@ -3,7 +3,7 @@ import cors from "cors"
 
 import authRouter from "./routes/auth"
 import userRouter from "./routes/user"
-import postRouter from "./routes/post"
+import postRouter from "./routes/posts"
 import groupRouter from "./routes/group"
 import commentRouter from "./routes/comment"
 
