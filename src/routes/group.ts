@@ -7,6 +7,24 @@ import verifyUser from "../middleware/auth"
 const router = express.Router()
 
 /**
+ * Get a list of five
+ * latest Groups
+ * @name /group/list
+ * @function
+ * @memberof module:routes/group~groupRouter
+ */
+router.get("/list", async (req: Request, res: Response) => {
+  const groupList = await prisma.group.findMany({
+    take: 5,
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
+
+  return res.json(groupList)
+})
+
+/**
  * Get Group metadata and
  * check if the user joined
  * group or not

@@ -40,11 +40,13 @@ model Post {
 }
 
 model Group {
-  id          Int    @id @default(autoincrement())
-  name        String @unique
-  description String @default("")
-  admins      User[] @relation("Admin")
-  users       User[] @relation("Groups")
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  admins      User[]   @relation("Admin")
+  users       User[]   @relation("Groups")
   posts       Post[]
 }
 
