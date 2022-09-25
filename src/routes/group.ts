@@ -170,9 +170,52 @@ router.post(
           },
         },
       },
+      select: {
+        _count: {
+          select: { users: true },
+        },
+        name: true,
+      },
     })
 
-    return res.json({ joined: groupJoined })
+    return res.json(groupJoined)
+  }
+)
+
+/**
+ * Leave a Group
+ * @name /group/:name/leave
+ * @function
+ * @memberof module:routes/group~groupRouter
+ */
+router.post(
+  "/:name/leave",
+  async (
+    req: Request<{ name: string }, {}, { token: string }>,
+    res: Response
+  ) => {
+    const { name } = req.params
+
+    const user = res.locals.user
+
+    const groupJoined = await prisma.group.update({
+      where: { name },
+      data: {
+        users: {
+          disconnect: {
+            id: user.id,
+          },
+        },
+      },
+      select: {
+        _count: {
+          select: { users: true },
+        },
+        name: true,
+      },
+    })
+
+    return res.json(groupJoined)
   }
 )
 
